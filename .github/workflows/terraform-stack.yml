@@ -1,0 +1,102 @@
+name: terraform-stack
+
+on:
+  workflow_call:
+    inputs:
+      stack:
+        description: Terraform root module directory, for example stacks/10-governance
+        required: true
+        type: string
+      state_key:
+        description: State blob name, for example governance.tfstate
+        required: true
+        type: string
+      environment:
+        description: GitHub environment that gates the apply job
+        required: true
+        type: string
+      var_file:
+        description: Optional tfvars path relative to the stack directory
+        required: false
+        type: string
+        default: ""
+      action:
+        description: apply or destroy
+        required: false
+        type: string
+        default: apply
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TF_VERSION: "1.15.9"
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.PLATFORM_SUBSCRIPTION_ID }}
+  TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+  TF_VAR_platform_subscription_id: ${{ secrets.PLATFORM_SUBSCRIPTION_ID }}
+  TF_VAR_lz_dev_subscription_id: ${{ secrets.LZ_DEV_SUBSCRIPTION_ID }}
+  TF_VAR_lz_prod_subscription_id: ${{ secrets.LZ_PROD_SUBSCRIPTION_ID }}
+  TF_VAR_tfstate_resource_group_name: ${{ vars.TFSTATE_RESOURCE_GROUP }}
+  TF_VAR_tfstate_storage_account_name: ${{ vars.TFSTATE_STORAGE_ACCOUNT }}
+  TF_VAR_tfstate_container_name: ${{ vars.TFSTATE_CONTAINER }}
+  STACK: ${{ inputs.stack }}
+  STATE_KEY: ${{ inputs.state_key }}
+  VAR_FILE: ${{ inputs.var_file }}
+  TF_ACTION: ${{ inputs.action }}
+
+jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: ./scripts/tf-init.sh "${STACK}" "${STATE_KEY}"
+
+      - name: Terraform plan
+        id: plan
+        run: ./scripts/tf-plan.sh
+
+  apply:
+    name: ${{ inputs.action }}
+    needs: plan
+    if: needs.plan.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: tfstate-${{ inputs.state_key }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: ./scripts/tf-init.sh "${STACK}" "${STATE_KEY}"
+
+      - name: Terraform plan (under the environment identity)
+        run: ./scripts/tf-plan.sh
+
+      - name: Terraform apply
+        run: terraform -chdir="${STACK}" apply -input=false -lock-timeout=5m tfplan

@@ -1,0 +1,66 @@
+name: destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Workload stack to destroy
+        required: true
+        type: choice
+        options:
+          - aks-dev
+          - avd-prod
+          - avd-dev
+      confirm:
+        description: Type DESTROY to confirm
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-latest
+    outputs:
+      stack: ${{ steps.map.outputs.stack }}
+      state_key: ${{ steps.map.outputs.state_key }}
+      environment: ${{ steps.map.outputs.environment }}
+      var_file: ${{ steps.map.outputs.var_file }}
+    steps:
+      - name: Check confirmation and map target
+        id: map
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [ "${CONFIRM}" != "DESTROY" ]; then
+            echo "Confirmation text did not match; nothing was destroyed." >&2
+            exit 1
+          fi
+          case "${TARGET}" in
+            aks-dev)  stack="stacks/50-aks"; key="aks-dev.tfstate";  env="dev";  vars="env/dev.tfvars" ;;
+            avd-prod) stack="stacks/40-avd"; key="avd-prod.tfstate"; env="prod"; vars="env/prod.tfvars" ;;
+            avd-dev)  stack="stacks/40-avd"; key="avd-dev.tfstate";  env="dev";  vars="env/dev.tfvars" ;;
+            *) echo "Unknown target ${TARGET}" >&2; exit 1 ;;
+          esac
+          {
+            echo "stack=${stack}"
+            echo "state_key=${key}"
+            echo "environment=${env}"
+            echo "var_file=${vars}"
+          } >> "$GITHUB_OUTPUT"
+
+  destroy:
+    name: destroy
+    needs: guard
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: ${{ needs.guard.outputs.stack }}
+      state_key: ${{ needs.guard.outputs.state_key }}
+      environment: ${{ needs.guard.outputs.environment }}
+      var_file: ${{ needs.guard.outputs.var_file }}
+      action: destroy
+    secrets: inherit
