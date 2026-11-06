@@ -1,0 +1,93 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "stacks/**"
+      - "modules/**"
+      - "scripts/tf-init.sh"
+      - "scripts/tf-plan.sh"
+      - ".github/workflows/deploy.yml"
+      - ".github/workflows/terraform-stack.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  governance:
+    name: governance
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/10-governance
+      state_key: governance.tfstate
+      environment: platform
+    secrets: inherit
+
+  # Phase B4: uncomment
+  # rbac:
+  #   name: rbac
+  #   needs: governance
+  #   if: ${{ !failure() && !cancelled() }}
+  #   uses: ./.github/workflows/terraform-stack.yml
+  #   with:
+  #     stack: stacks/20-rbac
+  #     state_key: rbac.tfstate
+  #     environment: platform
+  #   secrets: inherit
+
+  # Phase B5: uncomment
+  # connectivity:
+  #   name: connectivity
+  #   needs: rbac
+  #   if: ${{ !failure() && !cancelled() }}
+  #   uses: ./.github/workflows/terraform-stack.yml
+  #   with:
+  #     stack: stacks/30-connectivity
+  #     state_key: connectivity.tfstate
+  #     environment: platform
+  #   secrets: inherit
+
+  # Phase B6: uncomment both
+  # avd-dev:
+  #   name: avd-dev
+  #   needs: connectivity
+  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
+  #   uses: ./.github/workflows/terraform-stack.yml
+  #   with:
+  #     stack: stacks/40-avd
+  #     state_key: avd-dev.tfstate
+  #     environment: dev
+  #     var_file: env/dev.tfvars
+  #   secrets: inherit
+  #
+  # avd-prod:
+  #   name: avd-prod
+  #   needs: avd-dev
+  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
+  #   uses: ./.github/workflows/terraform-stack.yml
+  #   with:
+  #     stack: stacks/40-avd
+  #     state_key: avd-prod.tfstate
+  #     environment: prod
+  #     var_file: env/prod.tfvars
+  #   secrets: inherit
+
+  # Phase B7: uncomment
+  # aks-dev:
+  #   name: aks-dev
+  #   needs: connectivity
+  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
+  #   uses: ./.github/workflows/terraform-stack.yml
+  #   with:
+  #     stack: stacks/50-aks
+  #     state_key: aks-dev.tfstate
+  #     environment: dev
+  #     var_file: env/dev.tfvars
+  #   secrets: inherit
