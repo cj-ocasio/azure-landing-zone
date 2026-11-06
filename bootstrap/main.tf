@@ -9,7 +9,7 @@ locals {
     lz_prod  = var.lz_prod_subscription_id
   }
 
-  repo = "${var.github_owner}/${var.github_repo}"
+  repo = "${var.github_owner}@${var.github_owner_id}/${var.github_repo}@${var.github_repo_id}"
 
   # One federated credential per OIDC subject GitHub will present.
   github_subjects = merge(
