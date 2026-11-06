@@ -30,17 +30,16 @@ jobs:
       environment: platform
     secrets: inherit
 
-  # Phase B4: uncomment
-  # rbac:
-  #   name: rbac
-  #   needs: governance
-  #   if: ${{ !failure() && !cancelled() }}
-  #   uses: ./.github/workflows/terraform-stack.yml
-  #   with:
-  #     stack: stacks/20-rbac
-  #     state_key: rbac.tfstate
-  #     environment: platform
-  #   secrets: inherit
+  rbac:
+    name: rbac
+    needs: governance
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/20-rbac
+      state_key: rbac.tfstate
+      environment: platform
+    secrets: inherit
 
   # Phase B5: uncomment
   # connectivity:
