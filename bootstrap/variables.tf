@@ -65,3 +65,13 @@ variable "tags" {
     workload    = "bootstrap"
   }
 }
+
+variable "github_owner_id" {
+  type        = string
+  description = "Numeric GitHub ID of the repository owner, used in immutable OIDC subjects."
+}
+
+variable "github_repo_id" {
+  type        = string
+  description = "Numeric GitHub ID of the repository, used in immutable OIDC subjects."
+}
