@@ -41,17 +41,16 @@ jobs:
       environment: platform
     secrets: inherit
 
-  # Phase B5: uncomment
-  # connectivity:
-  #   name: connectivity
-  #   needs: rbac
-  #   if: ${{ !failure() && !cancelled() }}
-  #   uses: ./.github/workflows/terraform-stack.yml
-  #   with:
-  #     stack: stacks/30-connectivity
-  #     state_key: connectivity.tfstate
-  #     environment: platform
-  #   secrets: inherit
+  connectivity:
+    name: connectivity
+    needs: rbac
+    if: ${{ !failure() && !cancelled() }}
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/30-connectivity
+      state_key: connectivity.tfstate
+      environment: platform
+    secrets: inherit
 
   # Phase B6: uncomment both
   # avd-dev:
