@@ -52,30 +52,29 @@ jobs:
       environment: platform
     secrets: inherit
 
-  # Phase B6: uncomment both
-  # avd-dev:
-  #   name: avd-dev
-  #   needs: connectivity
-  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
-  #   uses: ./.github/workflows/terraform-stack.yml
-  #   with:
-  #     stack: stacks/40-avd
-  #     state_key: avd-dev.tfstate
-  #     environment: dev
-  #     var_file: env/dev.tfvars
-  #   secrets: inherit
-  #
-  # avd-prod:
-  #   name: avd-prod
-  #   needs: avd-dev
-  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
-  #   uses: ./.github/workflows/terraform-stack.yml
-  #   with:
-  #     stack: stacks/40-avd
-  #     state_key: avd-prod.tfstate
-  #     environment: prod
-  #     var_file: env/prod.tfvars
-  #   secrets: inherit
+  avd-dev:
+    name: avd-dev
+    needs: connectivity
+    if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/40-avd
+      state_key: avd-dev.tfstate
+      environment: dev
+      var_file: env/dev.tfvars
+    secrets: inherit
+  
+  avd-prod:
+    name: avd-prod
+    needs: avd-dev
+    if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/40-avd
+      state_key: avd-prod.tfstate
+      environment: prod
+      var_file: env/prod.tfvars
+    secrets: inherit
 
   # Phase B7: uncomment
   # aks-dev:
