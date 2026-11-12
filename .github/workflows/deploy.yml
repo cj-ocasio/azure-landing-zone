@@ -76,15 +76,14 @@ jobs:
       var_file: env/prod.tfvars
     secrets: inherit
 
-  # Phase B7: uncomment
-  # aks-dev:
-  #   name: aks-dev
-  #   needs: connectivity
-  #   if: ${{ !failure() && !cancelled() && vars.WORKLOADS_ENABLED == 'true' }}
-  #   uses: ./.github/workflows/terraform-stack.yml
-  #   with:
-  #     stack: stacks/50-aks
-  #     state_key: aks-dev.tfstate
-  #     environment: dev
-  #     var_file: env/dev.tfvars
-  #   secrets: inherit
+  aks-dev:
+    name: aks-dev
+    needs: connectivity
+    if: ${{ !failure() && !cancelled() && vars.AKS_ENABLED == 'true' }}
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: stacks/50-aks
+      state_key: aks-dev.tfstate
+      environment: dev
+      var_file: env/dev.tfvars
+    secrets: inherit
