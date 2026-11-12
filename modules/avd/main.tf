@@ -3,14 +3,18 @@ locals {
   host_prefix = "${var.prefix}avd${var.environment}"
   host_names  = [for index in range(var.session_host_count) : format("%s%02d", local.host_prefix, index + 1)]
 
-  rdp_properties = join(";", [
+  rdp_property_list = [
     var.entra_sso_enabled ? "enablerdsaadauth:i:1" : "targetisaadjoined:i:1",
     "redirectclipboard:i:1",
     "drivestoredirect:s:",
     "redirectprinters:i:0",
     "audiomode:i:0",
     "audiocapturemode:i:1",
-  ])
+  ]
+
+  # AVD stores customRdpProperty with every property terminated by ";" and returns
+  # it that way. Emitting the same form keeps plans at zero diff.
+  rdp_properties = join("", [for property in local.rdp_property_list : "${property};"])
 }
 
 resource "azurerm_resource_group" "avd" {

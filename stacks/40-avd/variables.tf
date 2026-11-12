@@ -52,3 +52,8 @@ variable "nat_gateway_enabled" {
   description = "Create NAT Gateway egress for the session-host subnet."
   default     = true
 }
+
+variable "disk_controller_type" {
+  type        = string
+  description = "Session-host disk controller; must match the VM size (NVMe for v6 sizes)."
+}
