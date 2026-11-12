@@ -18,6 +18,7 @@ module "avd" {
   users_group_object_id = local.bootstrap.group_object_ids["avd_users_${var.environment}"]
   session_host_count    = var.session_host_count
   vm_size               = var.vm_size
+  disk_controller_type  = var.disk_controller_type
   image_sku             = var.image_sku
   dsc_configuration_url = var.dsc_configuration_url
   entra_sso_enabled     = var.entra_sso_enabled
